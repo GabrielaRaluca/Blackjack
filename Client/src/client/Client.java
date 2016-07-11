@@ -1,3 +1,5 @@
+package client;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -6,20 +8,25 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 
-public class client implements Runnable {
+public class Client {
 
-    private static String IP;
-    private static int port;
-    private static Socket socket;
-    private static ObjectInputStream input;
-    private static ObjectOutputStream output;
-    private static String message;
+    private String IP;
+    private int port;
+    private Socket socket;
+    private ObjectInputStream input;
+    private ObjectOutputStream output;
+    private String message;
+	private Scanner scanner;
 
-    client(){
+     public Client(String IP, int port){
+
+	this.IP = IP;
+	this.port = port;
+	scanner = new Scanner(System.in);
 
     }
 
-    public static void connectToServer() {
+    public void connectToServer() {
         System.out.println("Attempting connection...\n");
         try {
             socket = new Socket(IP, port);
@@ -33,7 +40,7 @@ public class client implements Runnable {
         }
     }
 
-    public static void setUpStreams() {
+    public void setUpStreams() {
         try {
             output = new ObjectOutputStream(socket.getOutputStream());
             output.flush();
@@ -44,14 +51,19 @@ public class client implements Runnable {
             e.printStackTrace();
         }
     }
+	
 
-    public void run() {
+    public void start() {
+
+	connectToServer();
+	setUpStreams();
         // TODO Auto-generated method stub
+	while( true ){
+
         try {
-            while (!(message = (String) input.readObject()).equals("Game finished"))
-            {
-                System.out.println(message);
-            }
+            message = (String) input.readObject();
+            
+            
         } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -59,9 +71,21 @@ public class client implements Runnable {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+	 System.out.println(message);
+	if (message.equals("WIN") || message.equals("LOSE") || message.equals("TIE") || message.equals ("BUST"))
+		break;
+	if (message.equals("IT IS YOUR TURN ! HIT OR STAND?")){
+
+		String line = "";
+		line = scanner.nextLine();
+		sendMessage(line);
+	}
+
+	}
+	close();
     }
 
-    public static void sendMessage(String message) {
+    public void sendMessage(String message) {
         try {
             output.writeObject(message);
             output.flush();
@@ -72,9 +96,9 @@ public class client implements Runnable {
 
     }
 
-    public static void close() {
+    public void close() {
         try
-        {
+        {   scanner.close();
             output.close();
             input.close();
             socket.close();
@@ -85,29 +109,7 @@ public class client implements Runnable {
         }
     }
 
-    public static void main(String[] args) {
-        IP = "localhost";
-        port = 9999;
-
-        connectToServer();
-        setUpStreams();
-
-        Thread thread = new Thread(new client());
-        thread.start();
-
-        Scanner input = new Scanner(System.in);
-        message = "";
-        while (!message.equals("Game finished"))
-        {
-            String line = input.nextLine();
-            sendMessage(line);
-        }
-
-        close();
-
-
-    }
-    
+  
 }
 
 
