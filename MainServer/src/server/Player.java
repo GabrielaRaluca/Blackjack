@@ -1,3 +1,7 @@
+package server;
+
+import server.Deck;
+
 /**
  * Created by teo on 08.07.2016.
  */
