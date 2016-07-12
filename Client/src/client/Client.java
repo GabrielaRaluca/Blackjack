@@ -72,9 +72,9 @@ public class Client {
             e.printStackTrace();
         }
 	 System.out.println(message);
-	if (message.equals("WIN") || message.equals("LOSE") || message.equals("TIE") || message.equals ("BUST"))
+	if (message.equals("WIN!") || message.equals("LOSE!") || message.equals("TIE!") || message.equals ("BUST!"))
 		break;
-	if (message.equals("IT IS YOUR TURN ! HIT OR STAND?")){
+	if (message.equals("It is your turn! HIT or STAND?"")){
 
 		String line = "";
 		line = scanner.nextLine();
