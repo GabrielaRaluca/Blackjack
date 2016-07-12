@@ -62,4 +62,14 @@ public class Player
         setTotal();
 
     }
+    public String toString() {
+        if (cards.size()!=0) {
+            String result = String.format("The cards of %s are:/n", name);
+            for (Card y : cards)
+                result += y;
+            result += String.format("with a total score of %d", total);
+            return result;
+        }
+        else return "you are empty-handed";
+    }
 }
