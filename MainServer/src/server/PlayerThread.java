@@ -1,89 +1,175 @@
+package server;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-/**
- * Created by Cata on 7/8/2016.
- */
-public class PlayerThread extends Player implements Runnable {
-    private static Server server;
-    private Socket clientSocket;
-    private ObjectInputStream in;
-    public ObjectOutputStream out;
 
-    String message;
-    int turn;
+public class PlayerThread extends Player implements Runnable{
 
-    public PlayerThread(String name, int turn)
+    private ObjectOutputStream output;
+    private ObjectInputStream input;
+    private Socket socket;
+    private Server server;
+
+    private String message;
+
+    private volatile boolean finished;
+    private volatile boolean busted;
+
+    private int turn;
+
+    public PlayerThread(Socket socket, Server server, int turn)
     {
-        super(name);
-        this.turn=turn;
-        this.clientSocket=new Socket();
-    }
-    public PlayerThread(Socket clientSocket, Server server, int turn) {
-        super("unnamed player");
-        this.clientSocket = clientSocket;
-        this.turn=turn;
-        PlayerThread.server = server;
+        this.socket = socket;
+        this.server = server;
+        this.turn = turn;
+        this.finished = false;
+        this.busted = false;
     }
 
-    public void run() {
+    @Override
+    public void run()
+    {
         try {
-            in = new ObjectInputStream(clientSocket.getInputStream());
-            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            input = new ObjectInputStream(socket.getInputStream());
+            output = new ObjectOutputStream(socket.getOutputStream());
+            output.flush();
+
             message = "";
 
-            //Start the conversation
-            while (true) {
-                if (this.turn == server.turn) {
-                    if (cards.size()<2) {
-                        this.addCard(server.deck.drawCard());
-                        out.writeObject(this+"/n");
-                        out.flush();
+            while(true)
+            {
+                if(server.getTurn() == this.turn && server.isGameStarted() && !finished)
+                {
+                    this.output.writeObject("It is your turn! HIT or STAND?");
+                    message = (String)this.input.readObject();
+
+                    if(message.equals("STAND"))
+                    {
+                        this.output.writeObject("Please wait for the results...");
+                        this.output.flush();
+                        this.finished = true;
                     }
-                    else{
-                        out.writeObject(this+"/n");
-                        out.writeObject("It is your turn now! HIT or STAND?");
-                        out.flush();
-
-
-                        message = (String) in.readObject();
-                        System.out.println("Client " + this.turn + ": " + message);
-
-
-                        if (message.equals("STAND")) {
-                            out.writeObject("STOP");
-                            out.flush();
-                        }
-                        else if (message.equals("HIT")) {
-
-                        }
-                        else if (message.equals("STOP")) {
-                            //finished = true;
-                            break;
-                        }
+                    if(message.equals("HIT"))
+                    {
+                        hitCardAndCheckBust();
                     }
                 }
-                else {//for updating the real-time game
-                    out.writeObject(server.getPlayerThread(server.turn));
-                    out.flush();
+
+                if(server.isGameOver())
+                {
+                    sendResults();
+                    break;
                 }
             }
-            close();
-
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        } catch (ClassNotFoundException cnfe) {
+        } catch (IOException e) {
+            e.printStackTrace();
+        }catch(ClassNotFoundException cnfe)
+        {
             cnfe.printStackTrace();
         }
+        close();
     }
+
+    private void sendResults()
+    {
+        if(!this.busted)
+        {
+            int dealersTotal = this.server.getDealer().getTotal();
+            int clientsTotal = this.getTotal();
+            try {
+                this.output.writeObject("Dealer has " + dealersTotal + " points!");
+                this.output.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(clientsTotal <= 21)
+            {
+                if(clientsTotal > dealersTotal && dealersTotal <= 21)
+                {
+                    try {
+                        this.output.writeObject("WIN!");
+                        this.output.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                if(clientsTotal == dealersTotal)
+                {
+                    try {
+                        this.output.writeObject("TIE!");
+                        this.output.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else if(dealersTotal <= 21)
+                {
+                    try {
+                        this.output.writeObject("LOSE!");
+                        this.output.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            else
+            {
+                try {
+                    this.output.writeObject("LOSE!");
+                    this.output.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void hitCardAndCheckBust()
+    {
+        synchronized(this)
+        {
+            Card card = this.server.getDeck().drawCard();
+            this.addCard(card);
+            try {
+                this.output.writeObject(card.toString());
+                this.output.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(this.getTotal() > 21)
+            {
+                this.busted = true;
+                this.finished = true;
+                try {
+                    this.output.writeObject("BUST!");
+                    this.output.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            else
+            {
+                try {
+                    this.output.writeObject("Your total is now " + this.getTotal());
+                    this.output.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
     public void close()
     {
         try{
-            in.close();
-            out.close();
-            clientSocket.close();
+            input.close();
+            output.close();
+            socket.close();
         }
         catch(IOException ioe)
         {
@@ -91,20 +177,20 @@ public class PlayerThread extends Player implements Runnable {
         }
     }
 
-    public void setServer(Server server)
+    public boolean isBusted() { return busted; }
+
+    public boolean isFinished()
     {
-        this.server=server;
+        return finished;
     }
 
-
-    public void hit() {//askCard();
+    public ObjectInputStream getInput()
+    {
+        return input;
     }
 
-    public void stand(){
-        this.receiving=false;
+    public ObjectOutputStream getOutput()
+    {
+        return output;
     }
-    public void start() {
-        this.receiving=true;
-    }
-
 }
