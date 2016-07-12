@@ -1,39 +1,65 @@
+package server;
+
 import java.util.ArrayList;
 
-/**
- * Created by Cata on 7/7/2016.
- */
-public class Player {
-    protected ArrayList<Card> cards;
-    protected String name;
-    protected int total;
-    protected int score;
-    protected boolean receiving;
+
+public class Player
+
+{
+    private ArrayList<Card> notAces; //the cards of each player
+    private ArrayList<Card> aces;
+    private ArrayList<Card> cards;
+    private int total;
 
     public Player()
     {
-        receiving=true;
-        name="Nobody";
-        cards=new ArrayList<Card>();
+        cards = new ArrayList<Card>();
+        aces = new ArrayList<Card>();
+        notAces = new ArrayList<Card>();
+        total = 0;
     }
-    public Player(String Name)
+
+    public ArrayList<Card> getCards()
     {
-        receiving=true;
-        cards=new ArrayList<Card>();
+        return cards;
     }
-    public String toString() {
-        if (cards.size()!=0) {
-            String result = String.format("The cards of %s are:/n", name);
-            for (Card y : cards)
-                result += y;
-            result += String.format("with a total score of %d", total);
-            return result;
+
+    public int getTotal()
+    {
+        return total;
+    }
+
+    public void setTotal()
+    {
+        total = 0;
+        for(Card c : notAces)
+        {
+            if(c.getValue() >= 10)
+                total += 10;
+            else
+                total += c.getValue();
         }
-        else return "you are empty-handed";
+        for(Card a : aces)
+        {
+            if(total <= 10)
+                total += 11;
+            else
+                total += 1;
+        }
     }
 
-    public void addCard(Card c){
-        cards.add(c);
-    }
+    public void addCard(Card card)
+    {
+        if(card.getValue() == 11)
+        {
+            aces.add(card);
+        }
+        else
+        {
+            notAces.add(card);
+        }
+        cards.add(card);
+        setTotal();
 
+    }
 }
