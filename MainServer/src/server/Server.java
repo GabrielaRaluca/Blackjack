@@ -29,9 +29,16 @@ public class Server {
 
 
     private volatile int turn;
+
+
+
     private volatile boolean gameStarted;
     private Deck deck;
     private volatile boolean running;
+
+
+
+    private volatile boolean gameOver;
 
     private final int portNumber = 9999;
 
@@ -46,9 +53,10 @@ public class Server {
         count = 0;
         gameStarted = false;
         threads = new ArrayList<PlayerThread>();
-        dealer = new Player();
+        dealer = new Player("Dealer");
         deck = new Deck();
         running = true;
+        gameOver = false;
 
 
         try {
@@ -59,21 +67,56 @@ public class Server {
     }
 
 
+    private int getMinim(){
+        int minim = 22;
+        for(int i = 0;i < count; i++)
+            if(minim > threads.get(i).getTotal())
+                minim = threads.get(i).getTotal();
+        return minim;
+    }
 
+
+
+
+   private void showCards(){
+       for(int i = 0; i < count; i++)
+       {
+           try {
+               threads.get(i).getOutput().writeObject(dealer.getCards().get(0));
+               threads.get(i).getOutput().flush();
+               threads.get(i).getOutput().writeObject(threads.get(i).toString());
+               threads.get(i).getOutput().flush();
+               for(int j = 0; j < count; j++)
+               {
+                   if( i != j)
+                   {
+                       threads.get(i).getOutput().writeObject(threads.get(j).toString());
+                       threads.get(i).getOutput().flush();
+                   }
+               }
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       }
+   }
 
 
     private void split_two_cards(){
         int i;
+        Card card;
         System.out.println("Split the cards:");
         for(i = 0; i < count; i++)
-            threads.get(i).getcard(deck);
-        dealer.getcard(deck);
-        for(i = 0; i < count; i++)
-            threads.get(i).getcard(deck);
-        dealer.getcard(deck);
-     /*
-      public synchronized void getcard(server.Deck object);
-     */
+        {   card = deck.drawCard();
+            threads.get(i).addCard(card);
+            card = deck.drawCard();
+            threads.get(i).addCard(card);
+        }
+        card = deck.drawCard();
+        dealer.addCard(card);
+        card = deck.drawCard();
+        dealer.addCard(card);
+
+
     }
 
 
@@ -87,14 +130,7 @@ public class Server {
                 clientSocket = serverSocket.accept();
 
 
-
-
-
-
-
-
-
-                threads.add(new PlayerThread());
+                threads.add(new PlayerThread(clientSocket,this,count,"Player " + (count + 1)));
                 threadPool.execute(threads.get(threads.size() - 1));
                 count++;
 
@@ -132,21 +168,35 @@ public class Server {
 
         deck.shuffle();
         split_two_cards();
-
-
-
+        showCards();
         gameStarted = true;
 
 
         while(turn < count)
         {
-            if(threads.get(turn).finished)
+            if(threads.get(turn).isFinished())
             {
+                getResults();
                 turn++;
+
             }
         }
 
         getCardsForDealer();
+        gameOver = true;
+
+    }
+
+    private void getResults()
+    {
+        for( int i = 0 ; i < count ;i++)
+            if(i != turn )
+                try {
+                    threads.get(i).getOutput().writeObject(threads.get(turn).toString());
+                    threads.get(i).getOutput().flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
     }
 
@@ -163,9 +213,18 @@ public class Server {
     }
 
     public void getCardsForDealer(){
-        while(dealer.total() < 16)
+        Card card;
+        while(dealer.getTotal() < getMinim())
         {
-            //adauga carti dealer si calculeaza totalul
+            card = deck.drawCard();
+            dealer.addCard(card);
         }
+    }
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
     }
 }

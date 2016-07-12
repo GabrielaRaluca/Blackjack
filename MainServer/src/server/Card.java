@@ -1,3 +1,5 @@
+package server;
+
 /**
  * Created by Cata on 7/6/2016.
  */
@@ -12,11 +14,11 @@ public class Card {
     }
     public Card(String type, int value)
     {
-        value=value;
-        suit=type;
-        if (value<12)
-            points=value;
-        else points=10;//pentru ca punctajul J D K e de 10
+        this.value = value;
+        this.suit = type;
+        if (value < 12)
+            this.points = value;
+        else this.points = 10;//pentru ca punctajul J D K e de 10
     }
 
 

@@ -10,13 +10,14 @@ public class Player
     private ArrayList<Card> aces;
     private ArrayList<Card> cards;
     private int total;
+    private String name;
 
-    public Player()
-    {
+    public Player(String name) {
         cards = new ArrayList<Card>();
         aces = new ArrayList<Card>();
         notAces = new ArrayList<Card>();
         total = 0;
+        this.name = name;
     }
 
     public ArrayList<Card> getCards()

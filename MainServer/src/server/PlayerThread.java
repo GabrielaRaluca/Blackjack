@@ -20,8 +20,9 @@ public class PlayerThread extends Player implements Runnable{
 
     private int turn;
 
-    public PlayerThread(Socket socket, Server server, int turn)
+    public PlayerThread(Socket socket, Server server, int turn,String name)
     {
+        super(name);
         this.socket = socket;
         this.server = server;
         this.turn = turn;
