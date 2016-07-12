@@ -44,7 +44,8 @@ public class PlayerThread extends Player implements Runnable{
             {
                 if(server.getTurn() == this.turn && server.isGameStarted() && !finished)
                 {
-                	this.output.writeObject("Your total is " + this.getTotal());
+                    this.output.writeObject("Your total is " + this.getTotal());
+ 		    this.output.flush();
                     this.output.writeObject("It is your turn! HIT or STAND?");
                     this.output.flush();
                     
