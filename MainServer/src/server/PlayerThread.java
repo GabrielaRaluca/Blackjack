@@ -44,8 +44,12 @@ public class PlayerThread extends Player implements Runnable{
             {
                 if(server.getTurn() == this.turn && server.isGameStarted() && !finished)
                 {
+                	this.output.writeObject("Your total is " + this.getTotal());
                     this.output.writeObject("It is your turn! HIT or STAND?");
+                    this.output.flush();
+                    
                     message = (String)this.input.readObject();
+                    System.out.println(message);
 
                     if(message.equals("STAND"))
                     {
@@ -85,6 +89,15 @@ public class PlayerThread extends Player implements Runnable{
                 this.output.flush();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            if(dealersTotal > 21)
+            {
+            	try {
+                    this.output.writeObject("WIN!");
+                    this.output.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             if(clientsTotal <= 21)
             {

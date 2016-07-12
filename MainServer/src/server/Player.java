@@ -64,10 +64,10 @@ public class Player
 
     }
     public String toString() {
-        if (cards.size()!=0) {
-            String result = String.format("The cards of %s are:/n", name);
+        if (cards.size() != 0) {
+            String result = String.format("The cards of %s are: \n", name);
             for (Card y : cards)
-                result += y;
+                result += y + "\n";
             result += String.format("with a total score of %d", total);
             return result;
         }

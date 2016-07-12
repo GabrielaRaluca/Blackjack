@@ -82,13 +82,14 @@ public class Server {
        for(int i = 0; i < count; i++)
        {
            try {
-               threads.get(i).getOutput().writeObject(dealer.getCards().get(0));
+               threads.get(i).getOutput().writeObject("Dealer has: \n" + dealer.getCards().get(0).toString());
                threads.get(i).getOutput().flush();
-               threads.get(i).getOutput().writeObject(threads.get(i).toString());
+               threads.get(i).getOutput().writeObject("Your cards are: " + threads.get(i).getCards().get(0) + " " + threads.get(i).getCards().get(1));
                threads.get(i).getOutput().flush();
+
                for(int j = 0; j < count; j++)
                {
-                   if( i != j)
+                   if(i != j)
                    {
                        threads.get(i).getOutput().writeObject(threads.get(j).toString());
                        threads.get(i).getOutput().flush();
@@ -189,8 +190,8 @@ public class Server {
 
     private void getResults()
     {
-        for( int i = 0 ; i < count ;i++)
-            if(i != turn )
+        for( int i = 0 ; i < count;i++)
+            if(i != turn && !threads.get(i).isBusted())
                 try {
                     threads.get(i).getOutput().writeObject(threads.get(turn).toString());
                     threads.get(i).getOutput().flush();
